@@ -1,0 +1,95 @@
+.canciones {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+}
+
+.canciones h2,
+.canciones h3 {
+  text-align: center;
+  color: #333;
+}
+
+.canciones form {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 0 auto 30px auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.canciones form label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.canciones form input[type="text"],
+.canciones form input[type="file"] {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.canciones form button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.canciones form button:hover {
+  background-color: #0056b3;
+}
+
+.canciones #preview-portada {
+  display: block;
+  margin: 10px auto;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.canciones hr {
+  margin: 40px 0;
+  border: none;
+  border-top: 1px solid #ccc;
+}
+
+.canciones table.dataTable {
+  width: 100%;
+  margin: 0 auto 30px auto;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.canciones table.dataTable thead {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.canciones table.dataTable th,
+.canciones table.dataTable td {
+  padding: 10px;
+  text-align: center;
+}
+
+.canciones table.dataTable img {
+  border-radius: 5px;
+}
+
+.canciones button {
+  cursor: pointer;
+}
+

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Canción</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            margin: 0 auto 30px auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        form label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        form input[type="text"],
+        form input[type="file"] {
+            width: 100%;
+            padding: 8px 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        form button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        form button:hover {
+            background-color: #0056b3;
+        }
+
+        #preview-portada {
+            display: block;
+            margin: 10px auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        hr {
+            margin: 40px 0;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+
+        table.dataTable {
+            width: 100%;
+            margin: 0 auto 30px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        table.dataTable thead {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        table.dataTable th, table.dataTable td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        table.dataTable img {
+            border-radius: 5px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>Subir Canción</h2>
+
+    <div>
+        <form id="form-cancion" enctype="multipart/form-data">
+            <label for="nombre">Nombre de la canción:</label>
+            <input type="text" id="nombre" name="nombre" required><br><br>
+
+            <label for="artista">Artista:</label>
+            <input type="text" id="artista" name="artista" required><br><br>
+
+            <!-- Campo oculto para el creador -->
+            <input type="hidden" id="creador" name="creador">
+
+            <label for="portada">Portada:</label>
+            <input type="file" id="portada" name="portada" accept="image/*"><br><br>
+            <img id="preview-portada" src="" alt="Vista previa" width="100" style="display:none;"><br><br>
+
+            <button type="submit" id="btn-guardar">Subir Canción</button>
+            <button type="button" id="btn-modificar" style="display:none;">Actualizar Canción</button>
+        </form>
+    </div>
+
+    <hr>
+
+    <h3>Canciones Subidas</h3>
+    <table id="tabla-canciones" class="display">
+        <thead>
+            <tr>
+                <th>Portada</th>
+                <th>Nombre</th>
+                <th>Artista</th>
+                <th>Creador</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <input type="hidden" id="cancion-id">
+
+    <!-- Librerías -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+
+    <script>
+        const formCancion = document.getElementById('form-cancion');
+        const btnGuardar = document.getElementById('btn-guardar');
+        const btnModificar = document.getElementById('btn-modificar');
+        const cancionIdInput = document.getElementById('cancion-id');
+        const creadorInput = document.getElementById('creador');
+        const portadaInput = document.getElementById('portada');
+        const previewPortada = document.getElementById('preview-portada');
+
+        // URL de backend (ajusta el puerto)
+        const API_URL = 'http://localhost:3000/api/canciones';
+        const token = localStorage.getItem('token');
+
+        // Asignar automáticamente la ID del usuario desde el token
+        if(token){
+            const decoded = jwt_decode(token);
+            creadorInput.value = decoded.id || decoded._id;
+        }
+
+        // Vista previa de la portada
+        portadaInput.addEventListener('change', () => {
+            const file = portadaInput.files[0];
+            if(file){
+                previewPortada.src = URL.createObjectURL(file);
+                previewPortada.style.display = 'inline';
+            } else {
+                previewPortada.src = '';
+                previewPortada.style.display = 'none';
+            }
+        });
+
+        // Subir canción
+        formCancion.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(formCancion);
+
+            try {
+                const resp = await fetch('api/canciones/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if(!resp.ok){
+                    const texto = await resp.text();
+                    console.error('Error al subir canción:', texto);
+                    alert('Error al subir canción. Revisa la consola.');
+                    return;
+                }
+
+                const data = await resp.json();
+                console.log('Canción subida:', data);
+
+                formCancion.reset();
+                previewPortada.style.display = 'none';
+                btnModificar.style.display = 'none';
+                btnGuardar.style.display = 'inline';
+                cargarTabla();
+            } catch(err){
+                console.error('Error de red:', err);
+                alert('No se pudo conectar con el servidor.');
+            }
+        });
+
+        // Cargar canciones
+        async function cargarTabla(){
+            try {
+                const resp = await fetch('api/canciones/', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if(!resp.ok){
+                    const texto = await resp.text();
+                    console.error('Error al cargar canciones:', texto);
+                    return;
+                }
+
+                const canciones = await resp.json();
+                const tabla = $('#tabla-canciones').DataTable();
+                tabla.clear();
+
+                canciones.forEach(c => {
+                    const portadaUrl = c.portada ? `http://localhost:3000/uploads/${c.portada}` : '';
+                    let creador = c.creador && typeof c.creador === 'object' ? (c.creador.nombre || c.creador._id) : c.creador;
+
+                    tabla.row.add([
+                        portadaUrl ? `<img src="${portadaUrl}" width="50">` : 'No hay portada',
+                        c.nombre,
+                        c.artista,
+                        creador,
+                        new Date(c.fechaCreacion).toLocaleString(),
+                        `
+                        <button onclick='editarCancion("${c._id}")'>Editar</button>
+                        <button onclick='eliminarCancion("${c._id}")'>Eliminar</button>
+                        `
+                    ]);
+                });
+                tabla.draw();
+            } catch(err){
+                console.error('Error de red al cargar canciones:', err);
+            }
+        }
+
+        // Editar canción
+        async function editarCancion(id){
+            try {
+                const resp = await fetch(`/api/canciones/${id}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const c = await resp.json();
+
+                document.getElementById('nombre').value = c.nombre;
+                document.getElementById('artista').value = c.artista;
+                creadorInput.value = c.creador && c.creador._id ? c.creador._id : c.creador;
+
+                cancionIdInput.value = c._id;
+                btnGuardar.style.display = 'none';
+                btnModificar.style.display = 'inline';
+                if(c.portada){
+                    previewPortada.src = `http://localhost:3000/uploads/${c.portada}`;
+                    previewPortada.style.display = 'inline';
+                }
+            } catch(err){
+                console.error(err);
+            }
+        }
+
+        // Actualizar canción
+        btnModificar.addEventListener('click', async () => {
+            const id = cancionIdInput.value;
+            const formData = new FormData(formCancion);
+
+            try {
+                const resp = await fetch(`api/canciones/${id}`, {
+                    method: 'PUT',
+                    body: formData,
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if(!resp.ok){
+                    const texto = await resp.text();
+                    console.error('Error al actualizar canción:', texto);
+                    return;
+                }
+
+                const data = await resp.json();
+                console.log('Canción actualizada:', data);
+
+                formCancion.reset();
+                cancionIdInput.value = '';
+                previewPortada.style.display = 'none';
+                btnModificar.style.display = 'none';
+                btnGuardar.style.display = 'inline';
+                cargarTabla();
+            } catch(err){
+                console.error(err);
+            }
+        });
+
+        // Eliminar canción
+        async function eliminarCancion(id){
+            if(!confirm('¿Seguro que quieres eliminar esta canción?')) return;
+            try {
+                await fetch(`api/canciones/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                cargarTabla();
+            } catch(err){
+                console.error(err);
+            }
+        }
+
+        $(document).ready(() => {
+            $('#tabla-canciones').DataTable({ responsive: true });
+            cargarTabla();
+        });
+    </script>
+</body>
+</html>
